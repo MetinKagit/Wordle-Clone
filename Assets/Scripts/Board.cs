@@ -12,6 +12,12 @@ public class Board : MonoBehaviour
         KeyCode.U, KeyCode.V, KeyCode.W, KeyCode.X, KeyCode.Y,
         KeyCode.Z
     };
+    [Header("State")]
+    public Tile.State emtyState;
+    public Tile.State occupiedState;
+    public Tile.State correctState;
+    public Tile.State wrongSpotState;
+    public Tile.State incorrectState;
 
     private String[] solutions;
     private String[] validWords;
@@ -66,6 +72,7 @@ public class Board : MonoBehaviour
         {
             columnIndex = Mathf.Max(columnIndex - 1, 0);
             currentRow.tiles[columnIndex].SetLetter(('\0'));
+            currentRow.tiles[columnIndex].SetState(emtyState);
         }
         else if (columnIndex >= currentRow.tiles.Length)
         {
@@ -82,6 +89,7 @@ public class Board : MonoBehaviour
                 if (Input.GetKeyDown(key))
                 {
                     currentRow.tiles[columnIndex].SetLetter((char)key);
+                    currentRow.tiles[columnIndex].SetState(occupiedState);
                     columnIndex++;
                     break;
                 }
@@ -91,22 +99,40 @@ public class Board : MonoBehaviour
 
     private void SubmitRow(Row row)
     {
+        string remaining = word;
         for (int i = 0; i < row.tiles.Length; i++)
         {
             Tile tile = row.tiles[i];
             if (tile.letter == word[i])
             {
-
-            }
-            else if (word.Contains(tile.letter))
+                tile.SetState(correctState);
+                remaining = remaining.Remove(i, 1);
+                remaining = remaining.Insert(i, " ");
+            }else if(!word.Contains(tile.letter))
             {
-
-            }
-            else
-            {
-
+                tile.SetState(incorrectState);
             }
         }
+
+        for (int i = 0; i < row.tiles.Length; i++)
+        {
+            Tile tile = row.tiles[i];
+            if (tile.state != correctState && tile.state != incorrectState)
+            {
+                if (remaining.Contains(tile.letter))
+                {
+                    tile.SetState(wrongSpotState);
+                    int index = remaining.IndexOf(tile.letter);
+                    remaining = remaining.Remove(index, 1);
+                    remaining = remaining.Insert(index, " ");
+                }
+                else
+                {
+                    tile.SetState(incorrectState);
+                }
+            }
+        }
+
         rowIndex++;
         columnIndex = 0;
         if (rowIndex >= rows.Length)
