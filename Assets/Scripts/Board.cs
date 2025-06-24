@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 public class Board : MonoBehaviour
 {
     private static readonly KeyCode[] SUPPRTED_KEYS = new KeyCode[]
@@ -30,7 +31,10 @@ public class Board : MonoBehaviour
     private int columnIndex = 0;
 
     [Header("UI")]
-    public  TextMeshProUGUI invalidWordText;
+    public TextMeshProUGUI messageText;
+    public Button newWordButton;
+    public Button tryAgainButton;
+
 
     private void Awake()
     {
@@ -45,6 +49,19 @@ public class Board : MonoBehaviour
     {
         LoadData();
         SetRandomWord();
+    }
+
+    public void NewGame()
+    {
+        ClearBoard();
+        SetRandomWord();
+        enabled = true;
+    }
+
+    public void TryAgain()
+    {
+        ClearBoard();
+        enabled = true;
     }
     public void LoadData()
     {
@@ -77,7 +94,7 @@ public class Board : MonoBehaviour
             columnIndex = Mathf.Max(columnIndex - 1, 0);
             currentRow.tiles[columnIndex].SetLetter(('\0'));
             currentRow.tiles[columnIndex].SetState(emtyState);
-            invalidWordText.gameObject.SetActive(false);
+            messageText.gameObject.SetActive(false);
         }
         else if (columnIndex >= currentRow.tiles.Length)
         {
@@ -105,8 +122,9 @@ public class Board : MonoBehaviour
     private void SubmitRow(Row row)
     {
         if (!IsValidWord(row.word))
-        { 
-            invalidWordText.gameObject.SetActive(true);
+        {
+            messageText.text = "Invalid Word!";
+            messageText.gameObject.SetActive(true);
             return;
         }
         string remaining = word;
@@ -144,11 +162,20 @@ public class Board : MonoBehaviour
             }
         }
 
+        if (HasWon(row))
+        {
+            enabled = false;
+            messageText.text = "Congratulations! You Win!";
+            messageText.gameObject.SetActive(true);
+            return;
+        }
+
         rowIndex++;
         columnIndex = 0;
         if (rowIndex >= rows.Length)
         {
-            Debug.Log("Game Over! No more rows available.");
+            messageText.text = "Game Over!";
+            messageText.gameObject.SetActive(true);
             enabled = false;
         }
     }
@@ -163,5 +190,44 @@ public class Board : MonoBehaviour
             }
         }
         return false;
+    }
+
+    private bool HasWon(Row row)
+    {
+        for (int i = 0; i < row.tiles.Length; i++)
+        {
+            if (row.tiles[i].state != correctState)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void OnEnable()
+    {
+        tryAgainButton.gameObject.SetActive(false);
+        newWordButton.gameObject.SetActive(false);
+
+    }
+    private void OnDisable()
+    {
+        tryAgainButton.gameObject.SetActive(true);
+        newWordButton.gameObject.SetActive(true);
+    }
+
+    private void ClearBoard()
+    {
+        for (int i = 0; i < rows.Length; i++)
+        {
+            for (int j = 0; j < rows[i].tiles.Length; j++)
+            {
+                rows[i].tiles[j].SetLetter('\0');
+                rows[i].tiles[j].SetState(emtyState);
+            }
+        }
+        rowIndex = 0;
+        columnIndex = 0;
+        messageText.gameObject.SetActive(false);
     }
 }
