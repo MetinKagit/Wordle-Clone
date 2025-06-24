@@ -1,6 +1,7 @@
 using System;
+using NUnit.Framework;
 using UnityEngine;
-
+using TMPro;
 public class Board : MonoBehaviour
 {
     private static readonly KeyCode[] SUPPRTED_KEYS = new KeyCode[]
@@ -27,6 +28,9 @@ public class Board : MonoBehaviour
     private Row[] rows;
     private int rowIndex = 0;
     private int columnIndex = 0;
+
+    [Header("UI")]
+    public  TextMeshProUGUI invalidWordText;
 
     private void Awake()
     {
@@ -73,6 +77,7 @@ public class Board : MonoBehaviour
             columnIndex = Mathf.Max(columnIndex - 1, 0);
             currentRow.tiles[columnIndex].SetLetter(('\0'));
             currentRow.tiles[columnIndex].SetState(emtyState);
+            invalidWordText.gameObject.SetActive(false);
         }
         else if (columnIndex >= currentRow.tiles.Length)
         {
@@ -99,6 +104,11 @@ public class Board : MonoBehaviour
 
     private void SubmitRow(Row row)
     {
+        if (!IsValidWord(row.word))
+        { 
+            invalidWordText.gameObject.SetActive(true);
+            return;
+        }
         string remaining = word;
         for (int i = 0; i < row.tiles.Length; i++)
         {
@@ -108,7 +118,8 @@ public class Board : MonoBehaviour
                 tile.SetState(correctState);
                 remaining = remaining.Remove(i, 1);
                 remaining = remaining.Insert(i, " ");
-            }else if(!word.Contains(tile.letter))
+            }
+            else if (!word.Contains(tile.letter))
             {
                 tile.SetState(incorrectState);
             }
@@ -140,5 +151,17 @@ public class Board : MonoBehaviour
             Debug.Log("Game Over! No more rows available.");
             enabled = false;
         }
+    }
+
+    private bool IsValidWord(string word)
+    {
+        for (int i = 0; i < validWords.Length; i++)
+        {
+            if (validWords[i] == word)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
